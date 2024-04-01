@@ -4,10 +4,9 @@ import { bucket } from "@/helpers/FirebaseHelper";
 const createFolder = async (folderPath) => {
     try {
         const ref = bucket.file(folderPath+'/');
-        let isExist = await ref.exists();
-        isExist = isExist[0];
-        if(isExist) {
-            return {message: "Folder already exists", status: 400 };
+        let [exists] = await ref.exists();
+        if (exists) {
+          return { message: 'Folder already exists', status: 400 };
         }
         ref.save('');
         return {message: "Folder created successfully", status: 201 };
@@ -69,4 +68,77 @@ const listFiles = async (folderName) => {
   }
 };
 
-export const firebaseStorageService = {createFolder, uploadFile,listFiles}
+const deleteFile = async (pathToBeDeleted) => {
+  try {
+    if (!pathToBeDeleted) {
+      return { response: "Folder not found", status: 404 };
+    }
+
+    const fileRef = bucket.file(pathToBeDeleted);
+
+    await fileRef.delete();
+
+    return {response: "File from "+pathToBeDeleted+" is deleted", status: 200};
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    return {response: "Failed to delete the file", status: 500};
+  }
+}
+
+const deleteFolder = async (folderName) => {
+  try {
+    if (!folderName) {
+      return { response: "Folder not found", status: 404 };
+    }
+
+    const folderRef = bucket.file(folderName + '/');
+
+    // List all files in the folder
+    const [files] = await bucket.getFiles({ prefix: folderName + '/' });
+
+    // Delete each file in the folder
+    await Promise.all(files.map((file) => file.delete()));
+
+    return {response: "Folder deleted successfully", status: 200};
+  } catch (error) {
+    console.error('Error deleting folder:', error);
+    return {response: "Error deleting folder : " + folderName, status: 500};
+  }
+};
+
+const getDownloadUrl = async (filePath) => {
+  try {
+    if (!filePath) {
+      return { response: 'File path not provided', status: 400 };
+    }
+
+    const fileRef = bucket.file(filePath);
+
+    // Check if the file exists
+    const [exists] = await fileRef.exists();
+    if (!exists) {
+      return { response: 'File not found', status: 404 };
+    }
+
+    // Get a signed URL for the file
+    const [url] = await fileRef.getSignedUrl({
+      action: 'read',
+      expires: Date.now() + 2 * 60 * 1000,
+    });
+
+    return { response:{downloadUrl: url}, status: 200 };
+  } catch (error) {
+    console.error('Error getting download URL:', error);
+    return { response: 'Failed to get download URL', status: 500 };
+  }
+};
+
+
+export const firebaseStorageService = {
+  createFolder,
+  uploadFile,
+  listFiles,
+  deleteFile,
+  deleteFolder,
+  getDownloadUrl,
+};
