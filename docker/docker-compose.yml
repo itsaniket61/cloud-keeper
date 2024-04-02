@@ -4,4 +4,4 @@ services:
     image: itsaniket61/cloudkeeper:latest
     container_name: cloudkeeper
     expose:
-      - "8080"
+      - "8081"
