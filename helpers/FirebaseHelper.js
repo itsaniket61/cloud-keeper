@@ -22,8 +22,8 @@ if (!admin.apps.length && serviceAccount.project_id) {
 }
 
 // Now you can use admin SDK functions, for example:
-const db = admin.firestore();
-const storage = admin.storage();
-const bucket = admin.storage().bucket();
+const db = serviceAccount.project_id ? admin.firestore(): null;
+const storage = serviceAccount.project_id ? admin.storage(): null;
+const bucket = serviceAccount.project_id ? admin.storage().bucket(): null;
 
 export { db, storage, bucket };
