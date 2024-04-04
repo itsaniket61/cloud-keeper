@@ -46,15 +46,14 @@ while (!serviceAccount && retries < MAX_RETRIES) {
   }
 }
 
-if (!serviceAccount || !serviceAccount.project_id) {
-  console.error('Incomplete service account information');
-  throw new Error('Incomplete service account information');
-}
-
-admin.initializeApp({
+if (serviceAccount && serviceAccount.project_id) {
+  admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     storageBucket: serviceAccount.project_id + '.appspot.com',
-});
+  });
+}else{
+  console.error('Error loading service account. Exiting...');
+}
 
 // Now you can use admin SDK functions, for example:
 const db = serviceAccount.project_id ? admin.firestore(): null;

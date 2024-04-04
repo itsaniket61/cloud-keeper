@@ -4,6 +4,10 @@ import { NextResponse } from "next/server";
 export const POST = async (request) =>{
     const {folderName} = await request.json();
     const storageType = process.env.CLOUD_STORAGE_TYPE;
+
+    if (!storageType) {
+      throw new Error(`Storage type is not specified'`);
+    }
     
     const storageService = APP.STORAGE.TYPE[storageType];
     const { message, status } = await storageService.createFolder(folderName);
@@ -16,6 +20,10 @@ export const GET = async (request) => {
     const folderName = queryParams.get('folderName');
 
     const storageType = process.env.CLOUD_STORAGE_TYPE;
+
+    if (!storageType) {
+      throw new Error(`Storage type is not specified'`);
+    }
 
     const storageService = APP.STORAGE.TYPE[storageType];
     const { response, status } = await storageService.listFiles(folderName);

@@ -6,6 +6,10 @@ export const POST = async (request) => {
   const filePath = formData.get("folderName");
   const file = formData.get("file");
   const storageType = process.env.CLOUD_STORAGE_TYPE;
+
+  if (!storageType) {
+    throw new Error(`Storage type is not specified'`);
+  }
     
   const storageService = APP.STORAGE.TYPE[storageType];
   const { message, status } = await storageService.uploadFile(filePath,file);
@@ -18,6 +22,10 @@ export const GET = async (request) => {
     const filePath = queryParams.get('filePath');
     
     const storageType = process.env.CLOUD_STORAGE_TYPE;
+
+    if (!storageType) {
+      throw new Error(`Storage type is not specified'`);
+    }
 
     const storageService = APP.STORAGE.TYPE[storageType];
     const { response, status } = await storageService.getDownloadUrl(filePath);
@@ -33,6 +41,10 @@ export const DELETE = async (request) => {
     const path = queryParams.get('path');
     
     const storageType = process.env.CLOUD_STORAGE_TYPE;
+
+    if (!storageType) {
+      throw new Error(`Storage type is not specified'`);
+    }
 
     const storageService = APP.STORAGE.TYPE[storageType];
     const { response, status } = await storageService.deleteFile(path);
