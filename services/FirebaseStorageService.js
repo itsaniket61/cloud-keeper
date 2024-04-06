@@ -17,37 +17,49 @@ const createFolder = async (folderPath) => {
 }
 
 // Upload a File to the bucket
-const uploadFile = async (filePath,file) => {
-    if (!file) {
-      return {message: "File not found", status: 404};
-    }
-    const fileRef = bucket.file(filePath + '/' + file.name);
-    const filename = file.name.replaceAll(' ', '_');
-    console.log(filename);
+const uploadFile = async (filePath, file) => {
+  if (!file) {
+    return { message: 'File not found', status: 404 };
+  }
+  if (file instanceof Blob) {
+    // Convert file to stream
+    const fileStream = file.stream();
 
-    const stream = fileRef.createWriteStream({
-      metadata: {
-        contentType: file.type,
-      },
+    // Convert stream to buffer
+    const chunks = [];
+    for await (const chunk of fileStream) {
+      chunks.push(chunk);
+    }
+  const buffer = Buffer.concat(chunks);
+  console.log(file);
+  const fileRef = bucket.file(filePath + '/' + file.name);
+
+  const stream = fileRef.createWriteStream({
+    metadata: {
+      contentType: file.type,
+    },
+  });
+
+  return new Promise((resolve, reject) => {
+    stream.on('error', (error) => {
+      console.error('Error uploading file:', error);
+      reject({ message: error.message, status: 500 });
     });
 
-    try {
-      stream.on('error', (error) => {
-        console.error('Error uploading file:', error);
-        return {message:error.message,status:500};
-      });
-
-      stream.on('finish', () => {
-        return { message: "Uploaded Succesfully!", status: 200 };
-      });
-
-      stream.end(file.data);
-      return { message: 'Success', status: 201 };
-    } catch (error) {
-      console.log('Error occured ', error);
+    stream.on('finish', () => {
+      resolve({ message: 'Uploaded Successfully!', status: 200 });
+    });
+    stream.end(buffer);
+  })
+    .then((response) => {
+      return response;
+    })
+    .catch((error) => {
+      console.log('Error occurred ', error);
       return { message: 'Failed', status: 500 };
-    }
-}
+    });
+}};
+
 
 const listFiles = async (folderName) => {
   try {
