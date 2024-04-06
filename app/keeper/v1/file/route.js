@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 
 export const POST = async (request) => {
   try {
-    const uid = await request.headers.get('uid');
     const formData = await request.formData();
     const filePath = formData.get('folderName');
     const file = formData.get('file');
@@ -14,7 +13,7 @@ export const POST = async (request) => {
     }
 
     const storageService = APP.STORAGE.TYPE[storageType];
-    const { message, status } = await storageService.uploadFile(uid, filePath, file);
+    const { message, status } = await storageService.uploadFile(filePath, file);
     return NextResponse.json({ message }, { status });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status:500 });
@@ -23,7 +22,6 @@ export const POST = async (request) => {
 
 export const GET = async (request) => {
   try {
-    const uid = await request.headers.get('uid');
     const queryParams = request.nextUrl.searchParams;
     const filePath = queryParams.get('filePath');
     
@@ -34,7 +32,7 @@ export const GET = async (request) => {
     }
 
     const storageService = APP.STORAGE.TYPE[storageType];
-    const { response, status } = await storageService.getDownloadUrl(uid,filePath);
+    const { response, status } = await storageService.getDownloadUrl(filePath);
     return NextResponse.json({ response }, { status });
   } catch (error) {
     return NextResponse.json({ response: error.message }, { status: 500 });
@@ -43,7 +41,6 @@ export const GET = async (request) => {
 
 export const DELETE = async (request) => {
   try {
-    const uid = await request.headers.get('uid');
     const queryParams = request.nextUrl.searchParams;
     const path = queryParams.get('path');
     
@@ -54,7 +51,7 @@ export const DELETE = async (request) => {
     }
 
     const storageService = APP.STORAGE.TYPE[storageType];
-    const { response, status } = await storageService.deleteFile(uid,path);
+    const { response, status } = await storageService.deleteFile(path);
     return NextResponse.json({ response }, { status });
   } catch (error) {
     return NextResponse.json({ response: error.message }, { status: 500 });
