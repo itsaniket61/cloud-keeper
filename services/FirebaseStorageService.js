@@ -1,8 +1,10 @@
 import { bucket } from "@/helpers/FirebaseHelper";
 
+const rootCollection = "BuilderX";
 // Create a new Folder
-const createFolder = async (folderPath) => {
+const createFolder = async (uid, folderPath) => {
     try {
+        folderPath = rootCollection + "/" + uid + "/" + folderPath;
         const ref = bucket.file(folderPath+'/');
         let [exists] = await ref.exists();
         if (exists) {
@@ -17,7 +19,8 @@ const createFolder = async (folderPath) => {
 }
 
 // Upload a File to the bucket
-const uploadFile = async (filePath, file) => {
+const uploadFile = async (uid, filePath, file) => {
+  filePath = rootCollection + '/' + uid + '/' + filePath;
   if (!file) {
     return { message: 'File not found', status: 404 };
   }
@@ -61,7 +64,8 @@ const uploadFile = async (filePath, file) => {
 }};
 
 
-const listFiles = async (folderName) => {
+const listFiles = async (uid, folderName) => {
+  folderName = rootCollection + '/' + uid + '/' + folderName;
   try {
     if (!folderName) {
       return {response: "Folder not found", status: 404};
@@ -80,7 +84,8 @@ const listFiles = async (folderName) => {
   }
 };
 
-const deleteFile = async (pathToBeDeleted) => {
+const deleteFile = async (uid, pathToBeDeleted) => {
+  pathToBeDeleted = rootCollection + '/' + uid + '/' + pathToBeDeleted;
   try {
     if (!pathToBeDeleted) {
       return { response: "Folder not found", status: 404 };
@@ -97,7 +102,8 @@ const deleteFile = async (pathToBeDeleted) => {
   }
 }
 
-const deleteFolder = async (folderName) => {
+const deleteFolder = async (uid, folderName) => {
+  folderName = rootCollection + '/' + uid + '/' + folderName;
   try {
     if (!folderName) {
       return { response: "Folder not found", status: 404 };
@@ -118,7 +124,8 @@ const deleteFolder = async (folderName) => {
   }
 };
 
-const getDownloadUrl = async (filePath) => {
+const getDownloadUrl = async (uid, filePath) => {
+  filePath = rootCollection + '/' + uid + '/' + filePath;
   try {
     if (!filePath) {
       return { response: 'File path not provided', status: 400 };
