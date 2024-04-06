@@ -1,10 +1,8 @@
 import { bucket } from "@/helpers/FirebaseHelper";
 
-const rootCollection = "BuilderX";
 // Create a new Folder
-const createFolder = async (uid, folderPath) => {
+const createFolder = async (folderPath) => {
     try {
-        folderPath = rootCollection + "/" + uid + "/" + folderPath;
         const ref = bucket.file(folderPath+'/');
         let [exists] = await ref.exists();
         if (exists) {
@@ -19,8 +17,7 @@ const createFolder = async (uid, folderPath) => {
 }
 
 // Upload a File to the bucket
-const uploadFile = async (uid, filePath, file) => {
-  filePath = rootCollection + '/' + uid + '/' + filePath;
+const uploadFile = async (filePath, file) => {
   if (!file) {
     return { message: 'File not found', status: 404 };
   }
@@ -64,8 +61,7 @@ const uploadFile = async (uid, filePath, file) => {
 }};
 
 
-const listFiles = async (uid, folderName) => {
-  folderName = rootCollection + '/' + uid + '/' + folderName;
+const listFiles = async (folderName) => {
   try {
     if (!folderName) {
       return {response: "Folder not found", status: 404};
@@ -84,8 +80,7 @@ const listFiles = async (uid, folderName) => {
   }
 };
 
-const deleteFile = async (uid, pathToBeDeleted) => {
-  pathToBeDeleted = rootCollection + '/' + uid + '/' + pathToBeDeleted;
+const deleteFile = async (pathToBeDeleted) => {
   try {
     if (!pathToBeDeleted) {
       return { response: "Folder not found", status: 404 };
@@ -102,8 +97,7 @@ const deleteFile = async (uid, pathToBeDeleted) => {
   }
 }
 
-const deleteFolder = async (uid, folderName) => {
-  folderName = rootCollection + '/' + uid + '/' + folderName;
+const deleteFolder = async (folderName) => {
   try {
     if (!folderName) {
       return { response: "Folder not found", status: 404 };
@@ -124,8 +118,7 @@ const deleteFolder = async (uid, folderName) => {
   }
 };
 
-const getDownloadUrl = async (uid, filePath) => {
-  filePath = rootCollection + '/' + uid + '/' + filePath;
+const getDownloadUrl = async (filePath) => {
   try {
     if (!filePath) {
       return { response: 'File path not provided', status: 400 };
