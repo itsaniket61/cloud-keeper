@@ -17,38 +17,37 @@ const createFolder = async (folderPath) => {
 }
 
 // Upload a File to the bucket
-const uploadFile = async (filePath, file, customMetadata = {}) => {
-  if (!file) {
-    return { message: 'File not found', status: 404 };
-  }
-  const fileRef = bucket.file(filePath + '/' + file.name);
-  const filename = file.name.replaceAll(' ', '_');
-  console.log(filename);
+const uploadFile = async (filePath,file) => {
+    if (!file) {
+      return {message: "File not found", status: 404};
+    }
+    const fileRef = bucket.file(filePath + '/' + file.name);
+    const filename = file.name.replaceAll(' ', '_');
+    console.log(filename);
 
-  const stream = fileRef.createWriteStream({
-    metadata: {
-      contentType: file.type,
-      customMetadata,
-    },
-  });
-
-  try {
-    stream.on('error', (error) => {
-      console.error('Error uploading file:', error);
-      return { message: error.message, status: 500 };
+    const stream = fileRef.createWriteStream({
+      metadata: {
+        contentType: file.type,
+      },
     });
 
-    stream.on('finish', () => {
-      return { message: 'Uploaded Succesfully!', status: 200 };
-    });
+    try {
+      stream.on('error', (error) => {
+        console.error('Error uploading file:', error);
+        return {message:error.message,status:500};
+      });
 
-    stream.end(file.data);
-    return { message: 'Success', status: 201 };
-  } catch (error) {
-    console.log('Error occured ', error);
-    return { message: 'Failed', status: 500 };
-  }
-};
+      stream.on('finish', () => {
+        return { message: "Uploaded Succesfully!", status: 200 };
+      });
+
+      stream.end(file.data);
+      return { message: 'Success', status: 201 };
+    } catch (error) {
+      console.log('Error occured ', error);
+      return { message: 'Failed', status: 500 };
+    }
+}
 
 const listFiles = async (folderName) => {
   try {
