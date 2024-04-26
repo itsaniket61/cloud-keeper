@@ -17,7 +17,7 @@ const createFolder = async (folderPath) => {
 }
 
 // Upload a File to the bucket
-const uploadFile = async (filePath, file) => {
+const uploadFile = async (filePath, file, customMetadata = {}) => {
   if (!file) {
     return { message: 'File not found', status: 404 };
   }
@@ -37,6 +37,7 @@ const uploadFile = async (filePath, file) => {
   const stream = fileRef.createWriteStream({
     metadata: {
       contentType: file.type,
+      customMetadata,
     },
   });
 
