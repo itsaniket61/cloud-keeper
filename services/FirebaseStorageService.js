@@ -17,56 +17,103 @@ const createFolder = async (folderPath) => {
 }
 
 // Upload a File to the bucket
-const uploadFile = async (filePath,file) => {
-    if (!file) {
-      return {message: "File not found", status: 404};
-    }
-    const fileRef = bucket.file(filePath + '/' + file.name);
-    const filename = file.name.replaceAll(' ', '_');
-    console.log(filename);
+const uploadFile = async (filePath, file, customMetadata = {}) => {
+  if (!file) {
+    return { message: 'File not found', status: 404 };
+  }
+  if (file instanceof Blob) {
+    // Convert file to stream
+    const fileStream = file.stream();
 
-    const stream = fileRef.createWriteStream({
-      metadata: {
-        contentType: file.type,
-      },
+    // Convert stream to buffer
+    const chunks = [];
+    for await (const chunk of fileStream) {
+      chunks.push(chunk);
+    }
+  const buffer = Buffer.concat(chunks);
+  console.log(file);
+  const fileRef = bucket.file(filePath + '/' + file.name);
+
+  const stream = fileRef.createWriteStream({
+    metadata: {
+      contentType: file.type,
+      customMetadata,
+    },
+  });
+
+  return new Promise((resolve, reject) => {
+    stream.on('error', (error) => {
+      console.error('Error uploading file:', error);
+      reject({ message: error.message, status: 500 });
     });
 
-    try {
-      stream.on('error', (error) => {
-        console.error('Error uploading file:', error);
-        return {message:error.message,status:500};
-      });
-
-      stream.on('finish', () => {
-        return { message: "Uploaded Succesfully!", status: 200 };
-      });
-
-      stream.end(file.data);
-      return { message: 'Success', status: 201 };
-    } catch (error) {
-      console.log('Error occured ', error);
+    stream.on('finish', () => {
+      resolve({ message: 'Uploaded Successfully!', status: 200 });
+    });
+    stream.end(buffer);
+  })
+    .then((response) => {
+      return response;
+    })
+    .catch((error) => {
+      console.log('Error occurred ', error);
       return { message: 'Failed', status: 500 };
-    }
-}
+    });
+}};
+
 
 const listFiles = async (folderName) => {
   try {
     if (!folderName) {
-      return {response: "Folder not found", status: 404};
+      return { response: 'Folder not found', status: 404 };
     }
 
     const [files] = await bucket.getFiles({ prefix: folderName + '/' });
 
-    const fileList = files.map((file) =>
-      file.name.replace(`${folderName}/`, '')
-    );
+    const fileSystem = {
+      name: folderName,
+      type: 'directory',
+      children: [],
+    };
 
-    return { response: fileList, status: 200 };
+    files.forEach((file) => {
+      const filePath = file.name.replace(`${folderName}/`, '');
+      const pathSegments = filePath.split('/');
+      let currentDirectory = fileSystem;
+
+      for (let i = 0; i < pathSegments.length - 1; i++) {
+        const directoryName = pathSegments[i];
+        let childDirectory = currentDirectory.children.find(
+          (child) => child.name === directoryName
+        );
+        if (!childDirectory) {
+          childDirectory = {
+            name: directoryName,
+            type: 'directory',
+            children: [],
+          };
+          currentDirectory.children.push(childDirectory);
+        }
+        currentDirectory = childDirectory;
+      }
+
+      // Add file to the directory
+      currentDirectory.children.push({
+        name: pathSegments[pathSegments.length - 1],
+        type: 'file',
+        size: file.size,
+        created_at: file.metadata.timeCreated,
+        modified_at: file.metadata.updated,
+      });
+    });
+
+    return { response: fileSystem, status: 200 };
   } catch (error) {
     console.error('Error listing files:', error);
     return { response: error, status: 500 };
   }
 };
+
 
 const deleteFile = async (pathToBeDeleted) => {
   try {
