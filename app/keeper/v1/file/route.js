@@ -6,13 +6,18 @@ export const POST = async (request) => {
   const filePath = formData.get("folderName");
   const file = formData.get("file");
   const storageType = process.env.CLOUD_STORAGE_TYPE;
+  const customMetadata = formData.get("customMetadata")??"{}";
 
   if (!storageType) {
     throw new Error(`Storage type is not specified'`);
   }
     
   const storageService = APP.STORAGE.TYPE[storageType];
-  const { message, status } = await storageService.uploadFile(filePath,file);
+  const { message, status } = await storageService.uploadFile(
+    filePath,
+    file,
+    JSON.parse(customMetadata)
+  );
   return NextResponse.json({message},{status});
 };
 
