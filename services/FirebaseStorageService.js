@@ -21,25 +21,25 @@ const uploadFile = async (filePath, file, customMetadata = {}) => {
   if (!file) {
     return { message: 'File not found', status: 404 };
   }
-  if (file instanceof Blob) {
-    // Convert file to stream
-    const fileStream = file.stream();
 
-    // Convert stream to buffer
-    const chunks = [];
-    for await (const chunk of fileStream) {
-      chunks.push(chunk);
-    }
-  const buffer = Buffer.concat(chunks);
-  console.log(file);
   const fileRef = bucket.file(filePath + '/' + file.name);
 
   const stream = fileRef.createWriteStream({
     metadata: {
       contentType: file.type,
-      customMetadata,
+      // Add other Firebase Storage metadata properties here if needed
     },
   });
+
+  // Convert file to stream
+  const fileStream = file.stream();
+
+  // Convert stream to buffer
+  const chunks = [];
+  for await (const chunk of fileStream) {
+    chunks.push(chunk);
+  }
+  const buffer = Buffer.concat(chunks);
 
   return new Promise((resolve, reject) => {
     stream.on('error', (error) => {
@@ -47,19 +47,25 @@ const uploadFile = async (filePath, file, customMetadata = {}) => {
       reject({ message: error.message, status: 500 });
     });
 
-    stream.on('finish', () => {
-      resolve({ message: 'Uploaded Successfully!', status: 200 });
+    stream.on('finish', async () => {
+      try {
+        // Set custom metadata after file upload
+        await fileRef.setMetadata({
+          metadata: {
+            ...customMetadata,
+          },
+        });
+
+        resolve({ message: 'Uploaded Successfully!', status: 200 });
+      } catch (error) {
+        console.error('Error setting custom metadata:', error);
+        reject({ message: 'Failed to set custom metadata', status: 500 });
+      }
     });
+
     stream.end(buffer);
-  })
-    .then((response) => {
-      return response;
-    })
-    .catch((error) => {
-      console.log('Error occurred ', error);
-      return { message: 'Failed', status: 500 };
-    });
-}};
+  });
+};
 
 
 const listFiles = async (folderName) => {
@@ -76,7 +82,7 @@ const listFiles = async (folderName) => {
       children: [],
     };
 
-    files.forEach((file) => {
+    files.forEach(async (file) => {
       const filePath = file.name.replace(`${folderName}/`, '');
       const pathSegments = filePath.split('/');
       let currentDirectory = fileSystem;
@@ -102,6 +108,7 @@ const listFiles = async (folderName) => {
         name: pathSegments[pathSegments.length - 1],
         type: 'file',
         size: file.size,
+        metadata: file.metadata.metadata || {},
         created_at: file.metadata.timeCreated,
         modified_at: file.metadata.updated,
       });
